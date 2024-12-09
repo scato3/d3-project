@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTickerData } from "@/app/type/call";
-import { handleWebSocketMessageFactory } from "@/app/components/handleMessage";
+import { handleWebSocketMessageFactory } from "@/app/utils/handleWebSocketMessageFactory";
 import { marketCodes } from "@/app/data/init";
 import { getMarketName } from "@/app/utils/translate";
 import styles from "./right.module.scss";

@@ -1,7 +1,6 @@
 @import url("./reset.css");
 
 body {
-  background-color: var(--gray-777);
   ::-webkit-scrollbar {
     width: 0;
   }
@@ -24,7 +23,6 @@ input,
 textarea,
 select,
 button {
-  font-family: var(--font-pretendard);
   outline: none;
   resize: none;
   border: none;
@@ -54,14 +52,4 @@ input[type="number"]::-webkit-inner-spin-button {
   -moz-user-select: none; /* 텍스트 선택 방지 (Firefox) */
   -ms-user-select: none; /* 텍스트 선택 방지 (IE/Edge) */
   user-select: none; /* 텍스트 선택 방지 (표준) */
-}
-
-.slick-dots li button:before {
-  color: var(--gray-777) !important;
-}
-
-.slick-dots li.slick-active button:before {
-  color: var(--main) !important;
-  width: 19px !important;
-  height: 6px !important;
 }
