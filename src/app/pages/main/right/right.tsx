@@ -16,10 +16,42 @@ export default function Right({
   const [data, setData] = useState<Record<string, UpbitTickerData>>({});
   const previousData = useRef<Record<string, number>>({});
   const [status, setStatus] = useState<Record<string, string>>({});
-  const timers = useRef<Record<string, NodeJS.Timeout>>({}); // 타이머 관리
+  const timers = useRef<Record<string, NodeJS.Timeout>>({});
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof UpbitTickerData | null;
+    direction: "asc" | "desc";
+  }>({ key: null, direction: "asc" });
 
   const handleWebSocketMessage = handleWebSocketMessageFactory(setData);
   useUpbitWebSocket(marketCodes, handleWebSocketMessage);
+
+  // 데이터 정렬
+  const sortedData = React.useMemo(() => {
+    const dataArray = Object.values(data);
+    if (!sortConfig.key) return dataArray;
+    return dataArray.sort((a, b) => {
+      const aValue = a[sortConfig.key!] || 0;
+      const bValue = b[sortConfig.key!] || 0;
+      if (sortConfig.direction === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [data, sortConfig]);
+
+  // 정렬 요청 처리
+  const handleSort = (key: keyof UpbitTickerData) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   useEffect(() => {
     Object.keys(data).forEach((key) => {
@@ -62,13 +94,25 @@ export default function Right({
         <thead>
           <tr>
             <th>마켓</th>
-            <th>현재가</th>
-            <th>전일 대비</th>
-            <th>거래대금</th>
+            <th onClick={() => handleSort("tp")}>
+              현재가{" "}
+              {sortConfig.key === "tp" &&
+                (sortConfig.direction === "asc" ? "↑" : "↓")}
+            </th>
+            <th onClick={() => handleSort("cr")}>
+              전일 대비{" "}
+              {sortConfig.key === "cr" &&
+                (sortConfig.direction === "asc" ? "↑" : "↓")}
+            </th>
+            <th onClick={() => handleSort("atp24h")}>
+              거래대금{" "}
+              {sortConfig.key === "atp24h" &&
+                (sortConfig.direction === "asc" ? "↑" : "↓")}
+            </th>
           </tr>
         </thead>
         <tbody>
-          {Object.values(data).map((item) => (
+          {sortedData.map((item) => (
             <tr key={item.cd} onClick={() => onMarketSelect(item.cd)}>
               <td>{getMarketName(item.cd)}</td>
               <td
@@ -76,8 +120,8 @@ export default function Right({
                   status[item.cd] === "increased"
                     ? styles.increased
                     : status[item.cd] === "decreased"
-                    ? styles.decreased
-                    : ""
+                      ? styles.decreased
+                      : ""
                 }`}
               >
                 {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
