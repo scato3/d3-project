@@ -4,13 +4,14 @@ import React, { useEffect, useRef, useCallback, useState } from "react";
 import * as d3 from "d3";
 import { fetchCandlestickData } from "@/app/call/candle";
 import { CandlestickData } from "@/app/type/candle";
+import { TimeUnitType } from "@/app/type/time";
 
 export default function CandlestickChart({
   marketCode,
   unit,
 }: {
   marketCode: string;
-  unit: "seconds" | "minutes" | "days" | "weeks" | "months";
+  unit: TimeUnitType;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [data, setData] = useState<CandlestickData[]>([]);

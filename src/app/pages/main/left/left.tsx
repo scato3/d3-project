@@ -4,15 +4,14 @@ import React, { useState } from "react";
 import CandlestickChart from "./components/chart";
 import styles from "./left.module.scss";
 import { getMarketName } from "@/app/utils/translate";
+import { TimeUnitType } from "@/app/type/time";
 
 export default function Left({
   selectedMarketCode,
 }: {
   selectedMarketCode: string;
 }) {
-  const [unit, setUnit] = useState<
-    "seconds" | "minutes" | "days" | "weeks" | "months"
-  >("days");
+  const [unit, setUnit] = useState<TimeUnitType>("days");
 
   const timeUnits = [
     { label: "초", value: "seconds" },
