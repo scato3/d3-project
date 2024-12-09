@@ -43,7 +43,7 @@ export default function CandlestickChart({
   }, [fetchData, unit]);
 
   const renderChart = useCallback(() => {
-    if (!data.length) return; // Avoid rendering if no data is available
+    if (!data.length) return;
 
     const container = svgRef.current?.parentElement;
     const containerWidth = container ? container.clientWidth : 800;
@@ -164,12 +164,29 @@ export default function CandlestickChart({
 
         // x축 값 계산
         const xDate = x.invert(mouseX);
-        const closestData = data.reduce((prev, curr) =>
-          Math.abs(curr.time - xDate.getTime()) <
-          Math.abs(prev.time - xDate.getTime())
-            ? curr
-            : prev
-        );
+
+        // y축 값 계산 (세로축 값)
+        const yValue = y.invert(mouseY);
+
+        // 값에 따라 포맷 처리
+        const formattedYValue = (() => {
+          if (yValue >= 1000) {
+            // 1000 이상: 정수만 표시하고 로케일 적용
+            return Math.floor(yValue).toLocaleString();
+          } else if (yValue >= 1) {
+            // 1 이상 1000 미만: 소수점 첫째 자리까지 표시하고 로케일 적용
+            return yValue.toLocaleString(undefined, {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            });
+          } else {
+            // 1 미만: 소수점 여섯째 자리까지 표시
+            return yValue.toLocaleString(undefined, {
+              minimumFractionDigits: 6,
+              maximumFractionDigits: 6,
+            });
+          }
+        })();
 
         // 교차선 표시
         crosshair.style("display", null);
@@ -185,12 +202,12 @@ export default function CandlestickChart({
         // 세로선 위치
         crosshair
           .select(".crosshair-y")
-          .attr("x1", x(new Date(closestData.time))!)
-          .attr("x2", x(new Date(closestData.time))!)
+          .attr("x1", x(xDate))
+          .attr("x2", x(xDate))
           .attr("y1", 0)
           .attr("y2", height);
 
-        // 가격 라벨 표시
+        // 가격 라벨 표시 (세로축 값)
         priceLabel
           .style("display", null)
           .attr(
@@ -199,7 +216,7 @@ export default function CandlestickChart({
               mouseY - 20
             })`
           );
-        priceLabel.select("text").text(closestData.close.toLocaleString());
+        priceLabel.select("text").text(`${formattedYValue}`);
       })
       .on("mouseout", () => {
         crosshair.style("display", "none");

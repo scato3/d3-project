@@ -42,7 +42,7 @@ export default function Left({
           ))}
         </div>
       </div>
-      <CandlestickChart marketCode={selectedMarketCode} unit={unit} />
+      <CandlestickChart marketCode={"KRW-BTC"} unit={unit} />
     </div>
   );
 }
