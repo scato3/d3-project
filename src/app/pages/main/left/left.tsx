@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import CandlestickChart from "./components/chart";
 import styles from "./left.module.scss";
+import { getMarketName } from "@/app/utils/translate";
 
 export default function Left({
   selectedMarketCode,
@@ -24,6 +25,9 @@ export default function Left({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <div className={styles.marketName}>
+          {getMarketName(selectedMarketCode)}
+        </div>
         <div className={styles.buttonGroup}>
           {timeUnits.map((unitOption) => (
             <button

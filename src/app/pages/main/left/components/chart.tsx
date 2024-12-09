@@ -160,7 +160,9 @@ export default function CandlestickChart({
       .style("fill", "none")
       .style("pointer-events", "all")
       .on("mousemove", (event) => {
-        const [mouseX] = d3.pointer(event);
+        const [mouseX, mouseY] = d3.pointer(event); // 마우스 위치 가져오기
+
+        // x축 값 계산
         const xDate = x.invert(mouseX);
         const closestData = data.reduce((prev, curr) =>
           Math.abs(curr.time - xDate.getTime()) <
@@ -169,23 +171,33 @@ export default function CandlestickChart({
             : prev
         );
 
+        // 교차선 표시
         crosshair.style("display", null);
 
+        // 가로선 위치
         crosshair
           .select(".crosshair-x")
-          .attr("x1", x(new Date(closestData.time))!)
-          .attr("x2", x(new Date(closestData.time))!);
+          .attr("x1", 0)
+          .attr("x2", width)
+          .attr("y1", mouseY) // 마우스 y 위치 기준으로 수평선 그리기
+          .attr("y2", mouseY);
 
+        // 세로선 위치
         crosshair
           .select(".crosshair-y")
-          .attr("y1", y(closestData.close))
-          .attr("y2", y(closestData.close));
+          .attr("x1", x(new Date(closestData.time))!)
+          .attr("x2", x(new Date(closestData.time))!)
+          .attr("y1", 0)
+          .attr("y2", height);
 
+        // 가격 라벨 표시
         priceLabel
           .style("display", null)
           .attr(
             "transform",
-            `translate(${margin.left - 180}, ${y(closestData.close) - 10})`
+            `translate(${mouseX > width - 100 ? mouseX - 100 : mouseX - 40}, ${
+              mouseY - 20
+            })`
           );
         priceLabel.select("text").text(closestData.close.toLocaleString());
       })
