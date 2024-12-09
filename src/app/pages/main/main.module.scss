@@ -1,0 +1,14 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+
+  .left {
+    flex: 900px;
+  }
+
+  .right {
+    flex: 1;
+  }
+}

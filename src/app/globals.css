@@ -1,42 +1,67 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import url("./reset.css");
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background-color: var(--gray-777);
+  ::-webkit-scrollbar {
+    width: 0;
   }
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
   margin: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+div {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+button {
+  border: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: var(--font-pretendard);
+  outline: none;
+  resize: none;
+  border: none;
+  box-sizing: border-box;
+}
+
+/* input, textarea의 기본 스타일 제거 */
+input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 숫자 입력 필드에서 스피너 제거 (Webkit 및 Firefox) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+* {
+  outline: none; /* 모든 요소에서 outline 제거 */
+  -webkit-tap-highlight-color: transparent; /* 모바일에서 클릭 하이라이트 제거 */
+  -webkit-user-select: none; /* 텍스트 선택 방지 (Webkit 기반 브라우저) */
+  -moz-user-select: none; /* 텍스트 선택 방지 (Firefox) */
+  -ms-user-select: none; /* 텍스트 선택 방지 (IE/Edge) */
+  user-select: none; /* 텍스트 선택 방지 (표준) */
+}
+
+.slick-dots li button:before {
+  color: var(--gray-777) !important;
+}
+
+.slick-dots li.slick-active button:before {
+  color: var(--main) !important;
+  width: 19px !important;
+  height: 6px !important;
 }

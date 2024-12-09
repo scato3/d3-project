@@ -1,0 +1,51 @@
+.container {
+  color: #333;
+  height: 100dvh;
+  overflow-y: scroll;
+  cursor: pointer;
+
+  table {
+    width: 100%;
+    font-size: 14px;
+
+    thead {
+      background-color: #f8f9fa;
+      tr {
+        th {
+          padding: 10px 15px;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        &:nth-child(even) {
+          background-color: #f8f9fa;
+        }
+
+        &:hover {
+          background-color: #e9ecef;
+        }
+
+        td {
+          padding: 10px 15px;
+          text-align: right;
+          min-width: 80px;
+          font-variant-numeric: tabular-nums; /* 숫자 간격 고정 */
+
+          &.positive {
+            color: blue;
+          }
+
+          &.negative {
+            color: red;
+          }
+
+          &:first-child {
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}
