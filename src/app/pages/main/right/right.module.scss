@@ -7,6 +7,8 @@
   table {
     width: 100%;
     font-size: 14px;
+    border-collapse: separate;
+    border-spacing: 5px;
 
     thead {
       background-color: #f8f9fa;
@@ -32,6 +34,9 @@
           text-align: right;
           min-width: 80px;
           font-variant-numeric: tabular-nums; /* 숫자 간격 고정 */
+          background-color: white;
+          border: 2px solid transparent;
+          border-radius: 4px;
 
           &.positive {
             color: blue;
@@ -43,6 +48,18 @@
 
           &:first-child {
             text-align: center;
+          }
+
+          &.valueBox {
+            padding: 5px;
+          }
+
+          &.increased {
+            border-color: #ff6b6b;
+          }
+
+          &.decreased {
+            border-color: #007bff;
           }
         }
       }

@@ -15,6 +15,8 @@ export async function fetchCandlestickData(
 
   const data: CandleApiResponse[] = await response.json();
 
+  console.log(data);
+
   return data.map((candle) => ({
     time: Math.floor(candle.timestamp / 1000), // Convert to seconds
     open: candle.opening_price,

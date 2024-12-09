@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTickerData } from "@/app/type/call";
 import { handleWebSocketMessageFactory } from "@/app/utils/handleWebSocketMessageFactory";
@@ -14,41 +14,47 @@ export default function Right({
   onMarketSelect: (marketCode: string) => void;
 }) {
   const [data, setData] = useState<Record<string, UpbitTickerData>>({});
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof UpbitTickerData | null;
-    direction: "asc" | "desc";
-  }>({ key: null, direction: "asc" });
+  const previousData = useRef<Record<string, number>>({});
+  const [status, setStatus] = useState<Record<string, string>>({});
+  const timers = useRef<Record<string, NodeJS.Timeout>>({}); // 타이머 관리
 
   const handleWebSocketMessage = handleWebSocketMessageFactory(setData);
   useUpbitWebSocket(marketCodes, handleWebSocketMessage);
 
-  const sortedData = React.useMemo(() => {
-    const dataArray = Object.values(data);
-    if (!sortConfig.key) return dataArray;
+  useEffect(() => {
+    Object.keys(data).forEach((key) => {
+      const currentValue = data[key]?.tp || 0;
+      const previousValue = previousData.current[key] || 0;
 
-    return dataArray.sort((a, b) => {
-      const aValue = a[sortConfig.key!] || 0;
-      const bValue = b[sortConfig.key!] || 0;
+      if (currentValue !== previousValue) {
+        const isIncreased = currentValue > previousValue;
+        const isDecreased = currentValue < previousValue;
 
-      if (sortConfig.direction === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
+        // 기존 타이머 취소
+        if (timers.current[key]) {
+          clearTimeout(timers.current[key]);
+        }
+
+        // 상태 업데이트 (값이 변경된 경우에만)
+        if (isIncreased || isDecreased) {
+          setStatus((prev) => ({
+            ...prev,
+            [key]: isIncreased ? "increased" : "decreased",
+          }));
+        }
+
+        // 새로운 타이머 설정
+        timers.current[key] = setTimeout(() => {
+          setStatus((prev) => ({
+            ...prev,
+            [key]: "",
+          }));
+        }, 1000);
+
+        previousData.current[key] = currentValue;
       }
     });
-  }, [data, sortConfig]);
-
-  const handleSort = (key: keyof UpbitTickerData) => {
-    setSortConfig((prev) => {
-      if (prev.key === key) {
-        return {
-          key,
-          direction: prev.direction === "asc" ? "desc" : "asc",
-        };
-      }
-      return { key, direction: "asc" };
-    });
-  };
+  }, [data]);
 
   return (
     <div className={styles.container}>
@@ -56,16 +62,24 @@ export default function Right({
         <thead>
           <tr>
             <th>마켓</th>
-            <th onClick={() => handleSort("tp")}>현재가</th>
-            <th onClick={() => handleSort("cr")}>전일 대비</th>
-            <th onClick={() => handleSort("atp24h")}>거래대금</th>
+            <th>현재가</th>
+            <th>전일 대비</th>
+            <th>거래대금</th>
           </tr>
         </thead>
         <tbody>
-          {sortedData.map((item) => (
+          {Object.values(data).map((item) => (
             <tr key={item.cd} onClick={() => onMarketSelect(item.cd)}>
               <td>{getMarketName(item.cd)}</td>
-              <td className={item.cr > 0 ? styles.positive : styles.negative}>
+              <td
+                className={`${styles.valueBox} ${
+                  status[item.cd] === "increased"
+                    ? styles.increased
+                    : status[item.cd] === "decreased"
+                    ? styles.decreased
+                    : ""
+                }`}
+              >
                 {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
               </td>
               <td className={item.cr > 0 ? styles.positive : styles.negative}>
