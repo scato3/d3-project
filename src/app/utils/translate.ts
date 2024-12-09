@@ -22,7 +22,7 @@ export function getMarketName(marketCode: string): string {
     "KRW-ETC": "이더리움 클래식",
     "KRW-ZIL": "질리카",
     "KRW-ONT": "온톨로지",
-    "KRW-HBAR": "헤데라 해시그래프",
+    "KRW-HBAR": "헤데라",
     "KRW-KLAY": "클레이튼",
     "KRW-EOS": "이오스",
     "KRW-STX": "스택스",
