@@ -11,7 +11,6 @@ export default function Main() {
 
   const handleMarketSelect = (marketCode: string) => {
     setSelectedMarketCode(marketCode);
-    console.log("Selected Market Code:", marketCode);
   };
 
   return (
@@ -20,7 +19,10 @@ export default function Main() {
         <Left selectedMarketCode={selectedMarketCode} />
       </div>
       <div className={styles.right}>
-        <Right onMarketSelect={handleMarketSelect} />
+        <Right
+          onMarketSelect={handleMarketSelect}
+          selectedMarketCode={selectedMarketCode}
+        />
       </div>
     </div>
   );

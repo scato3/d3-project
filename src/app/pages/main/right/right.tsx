@@ -10,8 +10,10 @@ import styles from "./right.module.scss";
 
 export default function Right({
   onMarketSelect,
+  selectedMarketCode,
 }: {
-  onMarketSelect: (marketCode: string) => void;
+  onMarketSelect: (marketCode: string, marketPrice: number) => void;
+  selectedMarketCode: string;
 }) {
   const [data, setData] = useState<Record<string, UpbitTickerData>>({});
   const previousData = useRef<Record<string, number>>({});
@@ -25,7 +27,6 @@ export default function Right({
   const handleWebSocketMessage = handleWebSocketMessageFactory(setData);
   useUpbitWebSocket(marketCodes, handleWebSocketMessage);
 
-  // 데이터 정렬
   const sortedData = React.useMemo(() => {
     const dataArray = Object.values(data);
     if (!sortConfig.key) return dataArray;
@@ -40,7 +41,6 @@ export default function Right({
     });
   }, [data, sortConfig]);
 
-  // 정렬 요청 처리
   const handleSort = (key: keyof UpbitTickerData) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -62,12 +62,10 @@ export default function Right({
         const isIncreased = currentValue > previousValue;
         const isDecreased = currentValue < previousValue;
 
-        // 기존 타이머 취소
         if (timers.current[key]) {
           clearTimeout(timers.current[key]);
         }
 
-        // 상태 업데이트 (값이 변경된 경우에만)
         if (isIncreased || isDecreased) {
           setStatus((prev) => ({
             ...prev,
@@ -75,7 +73,6 @@ export default function Right({
           }));
         }
 
-        // 새로운 타이머 설정
         timers.current[key] = setTimeout(() => {
           setStatus((prev) => ({
             ...prev,
@@ -87,6 +84,19 @@ export default function Right({
       }
     });
   }, [data]);
+
+  useEffect(() => {
+    if (selectedMarketCode && data[selectedMarketCode]) {
+      const selectedMarketData = data[selectedMarketCode];
+      const marketName = getMarketName(selectedMarketCode);
+      const price =
+        selectedMarketData.tp < 1
+          ? selectedMarketData.tp.toFixed(6)
+          : selectedMarketData.tp.toLocaleString();
+
+      document.title = `${price} ${marketName}`;
+    }
+  }, [selectedMarketCode, data]);
 
   return (
     <div className={styles.container}>
@@ -113,7 +123,7 @@ export default function Right({
         </thead>
         <tbody>
           {sortedData.map((item) => (
-            <tr key={item.cd} onClick={() => onMarketSelect(item.cd)}>
+            <tr key={item.cd} onClick={() => onMarketSelect(item.cd, item.tp)}>
               <td>{getMarketName(item.cd)}</td>
               <td
                 className={`${styles.valueBox} ${
