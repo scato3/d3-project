@@ -16,18 +16,16 @@ export default function CandlestickChart({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [data, setData] = useState<CandlestickData[]>([]);
 
-  // Fetch data only once
   const fetchData = useCallback(async () => {
     const fetchedData = await fetchCandlestickData(marketCode, unit);
     setData(
       fetchedData.map((d) => ({
         ...d,
-        time: d.time * 1000, // Convert to milliseconds
+        time: d.time * 1000,
       }))
     );
   }, [marketCode, unit]);
 
-  // Fetch data initially and set up polling based on `unit`
   useEffect(() => {
     fetchData();
 
@@ -73,6 +71,12 @@ export default function CandlestickChart({
       .nice()
       .range([height, 0]);
 
+    const timeFormat = (() => {
+      if (unit === "seconds") return "%H:%M:%S";
+      if (unit === "minutes") return "%H:%M";
+      return "%Y-%m-%d";
+    })();
+
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
@@ -80,8 +84,9 @@ export default function CandlestickChart({
         d3
           .axisBottom(x)
           .tickFormat((d) => {
-            const date = new Date(+d);
-            return d3.timeFormat("%m-%d")(date);
+            // 강제로 Date 객체로 변환
+            const date = d instanceof Date ? d : new Date(d as number);
+            return d3.timeFormat(timeFormat)(date);
           })
           .tickSizeOuter(0)
       )
@@ -154,6 +159,23 @@ export default function CandlestickChart({
       .attr("text-anchor", "middle")
       .style("font-size", "12px");
 
+    const dateLabel = svg.append("g").style("display", "none");
+
+    dateLabel
+      .append("rect")
+      .attr("fill", "black")
+      .attr("width", 100)
+      .attr("height", 20)
+      .attr("rx", 5);
+
+    dateLabel
+      .append("text")
+      .attr("fill", "white")
+      .attr("x", 50)
+      .attr("y", 14)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px");
+
     svg
       .append("rect")
       .attr("width", width)
@@ -161,15 +183,11 @@ export default function CandlestickChart({
       .style("fill", "none")
       .style("pointer-events", "all")
       .on("mousemove", (event) => {
-        const [mouseX, mouseY] = d3.pointer(event); // 마우스 위치 가져오기
+        const [mouseX, mouseY] = d3.pointer(event);
 
-        // x축 값 계산
         const xDate = x.invert(mouseX);
-
-        // y축 값 계산 (세로축 값)
         const yValue = y.invert(mouseY);
 
-        // 값에 따라 포맷 처리
         const formattedYValue = (() => {
           if (yValue >= 1000) {
             // 1000 이상: 정수만 표시하고 로케일 적용
@@ -189,18 +207,16 @@ export default function CandlestickChart({
           }
         })();
 
-        // 교차선 표시
-        crosshair.style("display", null);
+        const formattedDate = d3.timeFormat(timeFormat)(xDate);
 
-        // 가로선 위치
+        crosshair.style("display", null);
         crosshair
           .select(".crosshair-x")
           .attr("x1", 0)
           .attr("x2", width)
-          .attr("y1", mouseY) // 마우스 y 위치 기준으로 수평선 그리기
+          .attr("y1", mouseY)
           .attr("y2", mouseY);
 
-        // 세로선 위치
         crosshair
           .select(".crosshair-y")
           .attr("x1", x(xDate))
@@ -208,7 +224,6 @@ export default function CandlestickChart({
           .attr("y1", 0)
           .attr("y2", height);
 
-        // 가격 라벨 표시 (세로축 값)
         priceLabel
           .style("display", null)
           .attr(
@@ -218,12 +233,23 @@ export default function CandlestickChart({
             })`
           );
         priceLabel.select("text").text(`${formattedYValue}`);
+
+        dateLabel
+          .style("display", null)
+          .attr(
+            "transform",
+            `translate(${mouseX > width - 100 ? mouseX - 100 : mouseX - 40}, ${
+              height + 20
+            })`
+          );
+        dateLabel.select("text").text(`${formattedDate}`);
       })
       .on("mouseout", () => {
         crosshair.style("display", "none");
         priceLabel.style("display", "none");
+        dateLabel.style("display", "none");
       });
-  }, [data]);
+  }, [data, unit]);
 
   useEffect(() => {
     renderChart();
