@@ -5,5 +5,5 @@ export interface UpbitTickerData {
   lp: number; // 저가
   atp24h: number; // 24시간 평균가
   atv24h: number; // 24시간 거래량
-  cr: number; // 전일 대비 변화율
+  scr: number; // 전일 대비 변화율
 }

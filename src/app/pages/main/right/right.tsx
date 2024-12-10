@@ -95,19 +95,19 @@ export default function Right({
           <tr>
             <th>마켓</th>
             <th onClick={() => handleSort("tp")}>
-              현재가{" "}
+              현재가
               {sortConfig.key === "tp" &&
-                (sortConfig.direction === "asc" ? "↑" : "↓")}
+                (sortConfig.direction === "asc" ? "↓" : "↑")}
             </th>
-            <th onClick={() => handleSort("cr")}>
-              전일 대비{" "}
-              {sortConfig.key === "cr" &&
-                (sortConfig.direction === "asc" ? "↑" : "↓")}
+            <th onClick={() => handleSort("scr")}>
+              전일 대비
+              {sortConfig.key === "scr" &&
+                (sortConfig.direction === "asc" ? "↓" : "↑")}
             </th>
             <th onClick={() => handleSort("atp24h")}>
-              거래대금{" "}
+              거래대금
               {sortConfig.key === "atp24h" &&
-                (sortConfig.direction === "asc" ? "↑" : "↓")}
+                (sortConfig.direction === "asc" ? "↓" : "↑")}
             </th>
           </tr>
         </thead>
@@ -120,14 +120,14 @@ export default function Right({
                   status[item.cd] === "increased"
                     ? styles.increased
                     : status[item.cd] === "decreased"
-                      ? styles.decreased
-                      : ""
+                    ? styles.decreased
+                    : ""
                 }`}
               >
                 {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
               </td>
-              <td className={item.cr > 0 ? styles.positive : styles.negative}>
-                {(item.cr * 100).toFixed(2)}%
+              <td className={item.scr > 0 ? styles.positive : styles.negative}>
+                {(item.scr * 100).toFixed(2)}%
               </td>
               <td>
                 {item.atp24h

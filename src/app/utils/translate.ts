@@ -31,7 +31,7 @@ export function getMarketName(marketCode: string): string {
     "KRW-GRT": "그래프",
     "KRW-THETA": "쎄타",
     "KRW-FLOW": "플로우",
-    "KRW-AAVE": "아베",
+    "KRW-AAVE": "에이브",
     "KRW-BNB": "바이낸스 코인",
     "KRW-MKR": "메이커",
     "KRW-SNX": "신세틱스",
