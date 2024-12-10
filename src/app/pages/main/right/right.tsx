@@ -7,6 +7,7 @@ import { handleWebSocketMessageFactory } from "@/app/utils/handleWebSocketMessag
 import { marketCodes } from "@/app/data/init";
 import { getMarketName } from "@/app/utils/translate";
 import styles from "./right.module.scss";
+import { Sortable } from "./components/sort";
 
 export default function Right({
   onMarketSelect,
@@ -104,21 +105,24 @@ export default function Right({
         <thead>
           <tr>
             <th>마켓</th>
-            <th onClick={() => handleSort("tp")}>
-              현재가
-              {sortConfig.key === "tp" &&
-                (sortConfig.direction === "asc" ? "↓" : "↑")}
-            </th>
-            <th onClick={() => handleSort("scr")}>
-              전일 대비
-              {sortConfig.key === "scr" &&
-                (sortConfig.direction === "asc" ? "↓" : "↑")}
-            </th>
-            <th onClick={() => handleSort("atp24h")}>
-              거래대금
-              {sortConfig.key === "atp24h" &&
-                (sortConfig.direction === "asc" ? "↓" : "↑")}
-            </th>
+            <Sortable
+              label="현재가"
+              sortKey="tp"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            />
+            <Sortable
+              label="전일 대비"
+              sortKey="scr"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            />
+            <Sortable
+              label="거래대금"
+              sortKey="atp24h"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            />
           </tr>
         </thead>
         <tbody>
