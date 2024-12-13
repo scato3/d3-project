@@ -72,7 +72,7 @@ export function useUpbitWebSocket({
     return () => {
       tickerWs.close();
     };
-  }, []);
+  }, [marketCodes]);
 
   useEffect(() => {
     const tradeWs = createWebSocket("trade");
