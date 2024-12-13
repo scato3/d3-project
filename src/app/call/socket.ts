@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { UpbitTickerData, UpbitTradeData } from "../type/call";
 
 export function useUpbitWebSocket({
@@ -22,6 +22,9 @@ export function useUpbitWebSocket({
     onTradeRef.current = onTrade;
   }, [onTrade]);
 
+  // useMemo로 marketCodes의 참조 동일성을 유지
+  const memoizedMarketCodes = useMemo(() => marketCodes, [marketCodes]);
+
   const connectWebSocket = () => {
     const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
 
@@ -29,8 +32,8 @@ export function useUpbitWebSocket({
       console.log("WebSocket connected");
       const subscribeMessage = JSON.stringify([
         { ticket: "test" },
-        { type: "ticker", codes: marketCodes },
-        { type: "trade", codes: marketCodes },
+        { type: "ticker", codes: memoizedMarketCodes },
+        { type: "trade", codes: memoizedMarketCodes },
         { format: "SIMPLE" },
       ]);
       ws.send(subscribeMessage);
@@ -89,12 +92,12 @@ export function useUpbitWebSocket({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const updateMessage = JSON.stringify([
         { ticket: "test" },
-        { type: "ticker", codes: marketCodes },
-        { type: "trade", codes: marketCodes },
+        { type: "ticker", codes: memoizedMarketCodes },
+        { type: "trade", codes: memoizedMarketCodes },
         { format: "SIMPLE" },
       ]);
       wsRef.current.send(updateMessage);
       console.log("WebSocket subscription updated");
     }
-  }, [marketCodes]);
+  }, [memoizedMarketCodes]);
 }
