@@ -14,6 +14,7 @@ export function useUpbitWebSocket({
   const onMessageRef = useRef(onMessage);
   const onTradeRef = useRef(onTrade);
 
+  // Update refs to ensure latest callback functions are used
   useEffect(() => {
     onMessageRef.current = onMessage;
   }, [onMessage]);
@@ -22,6 +23,7 @@ export function useUpbitWebSocket({
     onTradeRef.current = onTrade;
   }, [onTrade]);
 
+  // Function to initialize or reconnect WebSocket
   const connectWebSocket = () => {
     const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
 
@@ -45,14 +47,12 @@ export function useUpbitWebSocket({
           parsedData.ty === "ticker" &&
           typeof onMessageRef.current === "function"
         ) {
-          const tickerData: UpbitTickerData = parsedData;
-          onMessageRef.current(tickerData);
+          onMessageRef.current(parsedData as UpbitTickerData);
         } else if (
           parsedData.ty === "trade" &&
           typeof onTradeRef.current === "function"
         ) {
-          const tradeData: UpbitTradeData = parsedData;
-          onTradeRef.current(tradeData);
+          onTradeRef.current(parsedData as UpbitTradeData);
         }
       } catch (error) {
         console.error("Error parsing WebSocket message:", error);
@@ -63,7 +63,7 @@ export function useUpbitWebSocket({
       console.log("WebSocket disconnected");
       if (!event.wasClean) {
         console.error("Unexpected disconnection. Reconnecting...");
-        setTimeout(connectWebSocket, 1000); // 재연결 시도
+        setTimeout(connectWebSocket, 1000); // Reconnect after 1 second
       }
     };
 
@@ -74,6 +74,7 @@ export function useUpbitWebSocket({
     wsRef.current = ws;
   };
 
+  // Initialize WebSocket connection
   useEffect(() => {
     connectWebSocket();
 
@@ -85,6 +86,7 @@ export function useUpbitWebSocket({
     };
   }, []);
 
+  // Update subscription when marketCodes change
   useEffect(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const updateMessage = JSON.stringify([
