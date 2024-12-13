@@ -10,6 +10,7 @@ export function useUpbitWebSocket({
   onMessage?: (data: UpbitTickerData) => void;
   onTrade?: (data: UpbitTradeData) => void;
 }) {
+  const wsRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
   const onTradeRef = useRef(onTrade);
 
@@ -21,14 +22,15 @@ export function useUpbitWebSocket({
     onTradeRef.current = onTrade;
   }, [onTrade]);
 
-  const createWebSocket = (type: "ticker" | "trade") => {
+  const connectWebSocket = () => {
     const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
 
     ws.onopen = () => {
-      console.log(`WebSocket connected for ${type}`);
+      console.log("WebSocket connected");
       const subscribeMessage = JSON.stringify([
         { ticket: "test" },
-        { type, codes: marketCodes },
+        { type: "ticker", codes: marketCodes },
+        { type: "trade", codes: marketCodes },
         { format: "SIMPLE" },
       ]);
       ws.send(subscribeMessage);
@@ -40,14 +42,12 @@ export function useUpbitWebSocket({
         const parsedData = JSON.parse(textData);
 
         if (
-          type === "ticker" &&
           parsedData.ty === "ticker" &&
           typeof onMessageRef.current === "function"
         ) {
           const tickerData: UpbitTickerData = parsedData;
           onMessageRef.current(tickerData);
         } else if (
-          type === "trade" &&
           parsedData.ty === "trade" &&
           typeof onTradeRef.current === "function"
         ) {
@@ -55,30 +55,46 @@ export function useUpbitWebSocket({
           onTradeRef.current(tradeData);
         }
       } catch (error) {
-        console.error(`Error parsing ${type} WebSocket message:`, error);
+        console.error("Error parsing WebSocket message:", error);
       }
     };
 
-    ws.onclose = () => {
-      console.log(`WebSocket disconnected for ${type}`);
+    ws.onclose = (event) => {
+      console.log("WebSocket disconnected");
+      if (!event.wasClean) {
+        console.error("Unexpected disconnection. Reconnecting...");
+        setTimeout(connectWebSocket, 1000); // 재연결 시도
+      }
     };
 
-    return ws;
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    wsRef.current = ws;
   };
 
   useEffect(() => {
-    const tickerWs = createWebSocket("ticker");
+    connectWebSocket();
 
     return () => {
-      tickerWs.close();
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [marketCodes]);
+  }, []);
 
   useEffect(() => {
-    const tradeWs = createWebSocket("trade");
-
-    return () => {
-      tradeWs.close();
-    };
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      const updateMessage = JSON.stringify([
+        { ticket: "test" },
+        { type: "ticker", codes: marketCodes },
+        { type: "trade", codes: marketCodes },
+        { format: "SIMPLE" },
+      ]);
+      wsRef.current.send(updateMessage);
+      console.log("WebSocket subscription updated");
+    }
   }, [marketCodes]);
 }
