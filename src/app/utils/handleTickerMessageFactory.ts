@@ -1,6 +1,6 @@
 import { UpbitTickerData } from "@/app/type/call";
 
-export function handleWebSocketMessageFactory(
+export function handleTickerMessageFactory(
   setData: React.Dispatch<React.SetStateAction<Record<string, UpbitTickerData>>>
 ) {
   return (parsedData: UpbitTickerData) => {

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTickerData } from "@/app/type/call";
-import { handleWebSocketMessageFactory } from "@/app/utils/handleWebSocketMessageFactory";
+import { handleTickerMessageFactory } from "@/app/utils/handleTickerMessageFactory";
 import { marketCodes } from "@/app/data/init";
 import { getMarketName } from "@/app/utils/translate";
 import styles from "./right.module.scss";
@@ -25,8 +25,11 @@ export default function Right({
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
 
-  const handleWebSocketMessage = handleWebSocketMessageFactory(setData);
-  useUpbitWebSocket(marketCodes, handleWebSocketMessage);
+  const handleTickerMessage = handleTickerMessageFactory(setData);
+  useUpbitWebSocket({
+    marketCodes: marketCodes,
+    onMessage: handleTickerMessage,
+  });
 
   const sortedData = React.useMemo(() => {
     const dataArray = Object.values(data);

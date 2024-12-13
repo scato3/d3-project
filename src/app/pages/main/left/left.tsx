@@ -5,6 +5,7 @@ import CandlestickChart from "./components/chart";
 import styles from "./left.module.scss";
 import { getMarketName } from "@/app/utils/translate";
 import { TimeUnitType } from "@/app/type/time";
+import Trade from "./components/trade";
 
 export default function Left({
   selectedMarketCode,
@@ -42,6 +43,7 @@ export default function Left({
         </div>
       </div>
       <CandlestickChart marketCode={selectedMarketCode} unit={unit} />
+      <Trade selectedMarketCode={selectedMarketCode} />
     </div>
   );
 }
