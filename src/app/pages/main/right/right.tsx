@@ -27,7 +27,7 @@ export default function Right({
 
   const handleTickerMessage = handleTickerMessageFactory(setData);
   useUpbitWebSocket({
-    marketCodes: marketCodes,
+    marketCodes,
     onMessage: handleTickerMessage,
   });
 
@@ -137,8 +137,8 @@ export default function Right({
                   status[item.cd] === "increased"
                     ? styles.increased
                     : status[item.cd] === "decreased"
-                    ? styles.decreased
-                    : ""
+                      ? styles.decreased
+                      : ""
                 }`}
               >
                 {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTradeData } from "@/app/type/call";
 import { handleTradeMessageFactory } from "@/app/utils/handleTradeMessageFactory";
@@ -19,9 +19,11 @@ export default function Trade({
     setTrades([]);
   }, [selectedMarketCode]);
 
+  const marketCodes = useMemo(() => [selectedMarketCode], [selectedMarketCode]);
+
   // WebSocket 연결
   useUpbitWebSocket({
-    marketCodes: [selectedMarketCode],
+    marketCodes,
     onTrade: handleTradeMessage,
   });
 

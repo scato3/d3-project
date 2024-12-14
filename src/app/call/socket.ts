@@ -30,6 +30,7 @@ export function useUpbitWebSocket({
       const subscribeMessage = JSON.stringify([
         { ticket: "test" },
         { type: "ticker", codes: marketCodes },
+        { type: "trade", codes: marketCodes },
         { format: "SIMPLE" },
       ]);
       ws.send(subscribeMessage);
@@ -85,6 +86,7 @@ export function useUpbitWebSocket({
   }, []);
 
   useEffect(() => {
+    console.log(marketCodes);
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const updateMessage = JSON.stringify([
         { ticket: "test" },
