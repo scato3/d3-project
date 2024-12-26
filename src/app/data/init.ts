@@ -46,6 +46,5 @@ export const marketCodes = [
   "KRW-ANKR",
   "KRW-1INCH",
   "KRW-RLC",
-  "KRW-TON",
   "KRW-VGX",
 ];

@@ -9,12 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "chart.js": "^4.4.7",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "d3": "^7.9.0",
+    "dayjs": "^1.11.13",
     "next": "15.0.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
     "react-virtuoso": "^4.12.3",
-    "sass": "^1.82.0"
+    "sass": "^1.82.0",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

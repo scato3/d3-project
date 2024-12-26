@@ -47,7 +47,6 @@ export function getMarketName(marketCode: string): string {
     "KRW-ANKR": "앵커",
     "KRW-1INCH": "1인치",
     "KRW-RLC": "아이젝",
-    "KRW-TON": "톤코인",
     "KRW-VGX": "보이저 토큰",
   };
 

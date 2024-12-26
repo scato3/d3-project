@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTickerData } from "@/app/type/call";
 import { handleTickerMessageFactory } from "@/app/utils/handleTickerMessageFactory";
@@ -31,7 +31,7 @@ export default function Right({
     onMessage: handleTickerMessage,
   });
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     const dataArray = Object.values(data);
     if (!sortConfig.key) return dataArray;
     return dataArray.sort((a, b) => {
@@ -137,8 +137,8 @@ export default function Right({
                   status[item.cd] === "increased"
                     ? styles.increased
                     : status[item.cd] === "decreased"
-                      ? styles.decreased
-                      : ""
+                    ? styles.decreased
+                    : ""
                 }`}
               >
                 {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
