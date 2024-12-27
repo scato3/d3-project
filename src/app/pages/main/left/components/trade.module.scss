@@ -1,6 +1,6 @@
 .container {
   width: 100%;
-  max-height: 450px;
+  max-height: calc(100dvh - 500px);
   overflow-y: scroll;
   margin-left: 50px;
 }
