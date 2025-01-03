@@ -34,16 +34,15 @@
 
 - **Framework**: Next.js 15.0.4
 - **Language**: TypeScript
-- **UI 라이브러리**: React
 - **차트 라이브러리**: D3.js 7.9.0
 - **스타일링**: SCSS Modules
 - **가상화**: React-Virtuoso 4.12.3
 
 ### 데이터 통신
 
-- **WebSocket**: 실시간 데이터 통신
-- **REST API**: 캔들스틱 데이터 조회
-- **Edge Runtime**: 서버리스 API 라우팅
+- **WebSocket**: 실시간 시세 및 체결 데이터 수신
+- **REST API**: 업비트 API를 통한 캔들스틱 데이터 조회
+- **API Route**: CORS 이슈 해결을 위한 프록시
 
 ## 주요 구현 사항
 
@@ -63,7 +62,7 @@ const handleWebSocketError = useCallback(() => {
 }, []);
 ```
 
-### 2. 고성능 차트 렌더링
+### 2. 차트 렌더링
 
 ```typescript
 // D3.js를 활용한 캔들스틱 차트 구현
@@ -101,7 +100,7 @@ const MemoizedTrade = memo(Trade);
 ### 2. 네트워크 최적화
 
 - WebSocket 재연결 지수 백오프 전략
-- Edge Runtime을 활용한 API 프록시
+- API Route를 통한 안전한 API 호출
 - 효율적인 데이터 구조화
 
 ### 3. 컴포넌트 최적화
