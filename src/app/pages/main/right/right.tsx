@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTickerData } from "@/app/type/call";
 import { handleTickerMessageFactory } from "@/app/utils/handleTickerMessageFactory";
@@ -10,10 +16,10 @@ import styles from "./right.module.scss";
 import { Sortable } from "./components/sort";
 
 export default function Right({
-  onMarketSelect,
+  onMarketSelectAction,
   selectedMarketCode,
 }: {
-  onMarketSelect: (marketCode: string, marketPrice: number) => void;
+  onMarketSelectAction: (marketCode: string, marketPrice: number) => void;
   selectedMarketCode: string;
 }) {
   const [data, setData] = useState<Record<string, UpbitTickerData>>({});
@@ -25,7 +31,11 @@ export default function Right({
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
 
-  const handleTickerMessage = handleTickerMessageFactory(setData);
+  const handleTickerMessage = useMemo(
+    () => handleTickerMessageFactory(setData),
+    []
+  );
+
   useUpbitWebSocket({
     marketCodes,
     onMessage: handleTickerMessage,
@@ -45,7 +55,7 @@ export default function Right({
     });
   }, [data, sortConfig]);
 
-  const handleSort = (key: keyof UpbitTickerData) => {
+  const handleSort = useCallback((key: keyof UpbitTickerData) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
         return {
@@ -55,13 +65,10 @@ export default function Right({
       }
       return { key, direction: "asc" };
     });
-  };
+  }, []);
 
-  useEffect(() => {
-    Object.keys(data).forEach((key) => {
-      const currentValue = data[key]?.tp || 0;
-      const previousValue = previousData.current[key] || 0;
-
+  const updateStatus = useCallback(
+    (key: string, currentValue: number, previousValue: number) => {
       if (currentValue !== previousValue) {
         const isIncreased = currentValue > previousValue;
         const isDecreased = currentValue < previousValue;
@@ -86,8 +93,17 @@ export default function Right({
 
         previousData.current[key] = currentValue;
       }
+    },
+    []
+  );
+
+  useEffect(() => {
+    Object.keys(data).forEach((key) => {
+      const currentValue = data[key]?.tp || 0;
+      const previousValue = previousData.current[key] || 0;
+      updateStatus(key, currentValue, previousValue);
     });
-  }, [data]);
+  }, [data, updateStatus]);
 
   useEffect(() => {
     if (selectedMarketCode && data[selectedMarketCode]) {
@@ -101,6 +117,41 @@ export default function Right({
       document.title = `${price} ${marketName}`;
     }
   }, [selectedMarketCode, data]);
+
+  const memoizedTableBody = useMemo(
+    () => (
+      <tbody>
+        {sortedData.map((item) => (
+          <tr
+            key={item.cd}
+            onClick={() => onMarketSelectAction(item.cd, item.tp)}
+          >
+            <td>{getMarketName(item.cd)}</td>
+            <td
+              className={`${styles.valueBox} ${
+                status[item.cd] === "increased"
+                  ? styles.increased
+                  : status[item.cd] === "decreased"
+                  ? styles.decreased
+                  : ""
+              }`}
+            >
+              {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
+            </td>
+            <td className={item.scr > 0 ? styles.positive : styles.negative}>
+              {(item.scr * 100).toFixed(2)}%
+            </td>
+            <td>
+              {item.atp24h
+                ? `${Math.floor(item.atp24h / 1000000).toLocaleString()}백만`
+                : "데이터 없음"}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    ),
+    [sortedData, status, onMarketSelectAction]
+  );
 
   return (
     <div className={styles.container}>
@@ -128,32 +179,7 @@ export default function Right({
             />
           </tr>
         </thead>
-        <tbody>
-          {sortedData.map((item) => (
-            <tr key={item.cd} onClick={() => onMarketSelect(item.cd, item.tp)}>
-              <td>{getMarketName(item.cd)}</td>
-              <td
-                className={`${styles.valueBox} ${
-                  status[item.cd] === "increased"
-                    ? styles.increased
-                    : status[item.cd] === "decreased"
-                    ? styles.decreased
-                    : ""
-                }`}
-              >
-                {item.tp < 1 ? item.tp.toFixed(6) : item.tp.toLocaleString()}
-              </td>
-              <td className={item.scr > 0 ? styles.positive : styles.negative}>
-                {(item.scr * 100).toFixed(2)}%
-              </td>
-              <td>
-                {item.atp24h
-                  ? `${Math.floor(item.atp24h / 1000000).toLocaleString()}백만`
-                  : "데이터 없음"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        {memoizedTableBody}
       </table>
     </div>
   );

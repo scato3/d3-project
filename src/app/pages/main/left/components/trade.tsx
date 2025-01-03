@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useUpbitWebSocket } from "@/app/call/socket";
 import { UpbitTradeData } from "@/app/type/call";
-import { handleTradeMessageFactory } from "@/app/utils/handleTradeMessageFactory";
 import styles from "./trade.module.scss";
+import { Virtuoso } from "react-virtuoso";
 
 export default function Trade({
   selectedMarketCode,
@@ -12,61 +12,66 @@ export default function Trade({
   selectedMarketCode: string;
 }) {
   const [trades, setTrades] = useState<UpbitTradeData[]>([]);
+  const MAX_TRADES = 100;
 
-  const handleTradeMessage = handleTradeMessageFactory(setTrades);
+  const handleTradeMessage = useCallback((newTrade: UpbitTradeData) => {
+    setTrades((prevTrades) => {
+      const updatedTrades = [newTrade, ...prevTrades].slice(0, MAX_TRADES);
+      return updatedTrades;
+    });
+  }, []);
 
-  // selectedMarketCode 변경 시 trades 초기화
   useEffect(() => {
     setTrades([]);
   }, [selectedMarketCode]);
 
   const marketCodes = useMemo(() => [selectedMarketCode], [selectedMarketCode]);
 
-  console.log(trades);
-
-  // WebSocket 연결
   useUpbitWebSocket({
     marketCodes,
     onTrade: handleTradeMessage,
   });
 
-  console.log(trades);
+  const TradeRow = useCallback(({ trade }: { trade: UpbitTradeData }) => {
+    const adjustedTime = (() => {
+      const hour = Number(trade.ttm.slice(0, 2));
+      const adjustedHour = (hour + 9) % 24;
+      return `${adjustedHour.toString().padStart(2, "0")}${trade.ttm.slice(2)}`;
+    })();
+
+    return (
+      <div className={styles.row}>
+        <div className={styles.cell}>{adjustedTime}</div>
+        <div className={styles.cell}>{trade.tp.toLocaleString()}</div>
+        <div
+          className={`${styles.cell} ${
+            trade.c === "RISE" ? styles.red : styles.blue
+          }`}
+        >
+          {(trade.cp || 0).toLocaleString()}
+        </div>
+        <div className={styles.cell}>{trade.tv.toFixed(4)}</div>
+      </div>
+    );
+  }, []);
 
   return (
     <div className={styles.container}>
       <h2 className={styles.header}>
         실시간 거래 데이터 ({selectedMarketCode})
       </h2>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>시간</th>
-            <th>종가 (KRW)</th>
-            <th>전일 대비</th>
-            <th>거래량 ({selectedMarketCode})</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trades.map((trade, index) => (
-            <tr key={index}>
-              <td>
-                {(() => {
-                  const hour = Number(trade.ttm.slice(0, 2));
-                  const adjustedHour = (hour + 9) % 24;
-                  return `${adjustedHour
-                    .toString()
-                    .padStart(2, "0")}${trade.ttm.slice(2)}`;
-                })()}
-              </td>
-              <td>{trade.tp.toLocaleString()}</td>
-              <td className={trade.c === "RISE" ? styles.red : styles.blue}>
-                {(trade.cp || 0).toLocaleString()}
-              </td>
-              <td>{trade.tv.toFixed(4)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className={styles.tableHeader}>
+        <div className={styles.headerCell}>시간</div>
+        <div className={styles.headerCell}>종가 (KRW)</div>
+        <div className={styles.headerCell}>전일 대비</div>
+        <div className={styles.headerCell}>거래량 ({selectedMarketCode})</div>
+      </div>
+      <Virtuoso
+        style={{ height: "calc(100vh - 600px)" }}
+        totalCount={trades.length}
+        itemContent={(index) => <TradeRow trade={trades[index]} />}
+        overscan={20}
+      />
     </div>
   );
 }

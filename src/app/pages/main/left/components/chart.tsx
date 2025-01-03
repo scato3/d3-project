@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  useMemo,
+} from "react";
 import * as d3 from "d3";
 import { fetchCandlestickData } from "@/app/call/candle";
 import { CandlestickData } from "@/app/type/candle";
@@ -16,41 +22,51 @@ export default function CandlestickChart({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [data, setData] = useState<CandlestickData[]>([]);
 
+  // 차트 설정값 메모이제이션
+  const chartConfig = useMemo(() => {
+    const container = svgRef.current?.parentElement;
+    const containerWidth = container ? container.clientWidth : 800;
+    return {
+      margin: { top: 20, right: 30, bottom: 50, left: 100 },
+      width: containerWidth - 130,
+      height: 400 - 70,
+      timeFormat:
+        unit === "seconds"
+          ? "%H:%M:%S"
+          : unit === "minutes"
+          ? "%H:%M"
+          : "%Y-%m-%d",
+    };
+  }, [unit]);
+
   const fetchData = useCallback(async () => {
-    const fetchedData = await fetchCandlestickData(marketCode, unit);
-    setData(
-      fetchedData.map((d) => ({
-        ...d,
-        time: d.time * 1000,
-      }))
-    );
+    try {
+      const fetchedData = await fetchCandlestickData(marketCode, unit);
+      setData(
+        fetchedData.map((d) => ({
+          ...d,
+          time: d.time * 1000,
+        }))
+      );
+    } catch (error) {
+      console.error("Failed to fetch candlestick data:", error);
+    }
   }, [marketCode, unit]);
 
+  // 데이터 가져오기 인터벌 설정
   useEffect(() => {
     fetchData();
-
-    let intervalId: NodeJS.Timeout | null = null;
-    if (unit === "seconds") {
-      intervalId = setInterval(fetchData, 1000);
-    } else {
-      intervalId = setInterval(fetchData, 60000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    const intervalTime = unit === "seconds" ? 1000 : 60000;
+    const intervalId = setInterval(fetchData, intervalTime);
+    return () => clearInterval(intervalId);
   }, [fetchData, unit]);
 
   const renderChart = useCallback(() => {
-    if (!data.length) return;
+    if (!data.length || !svgRef.current) return;
 
-    const container = svgRef.current?.parentElement;
-    const containerWidth = container ? container.clientWidth : 800;
+    const { margin, width, height, timeFormat } = chartConfig;
 
-    const margin = { top: 20, right: 30, bottom: 50, left: 100 };
-    const width = containerWidth - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
-
+    // 기존 차트 정리
     d3.select(svgRef.current).selectAll("*").remove();
 
     const svg = d3
@@ -60,6 +76,7 @@ export default function CandlestickChart({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // 스케일 설정
     const x = d3
       .scaleTime()
       .domain(d3.extent(data, (d) => new Date(d.time)) as [Date, Date])
@@ -71,23 +88,18 @@ export default function CandlestickChart({
       .nice()
       .range([height, 0]);
 
-    const timeFormat = (() => {
-      if (unit === "seconds") return "%H:%M:%S";
-      if (unit === "minutes") return "%H:%M";
-      return "%Y-%m-%d";
-    })();
-
+    // 축 그리기
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
       .call(
         d3
           .axisBottom(x)
-          .tickFormat((d) => {
-            // 강제로 Date 객체로 변환
-            const date = d instanceof Date ? d : new Date(d as number);
-            return d3.timeFormat(timeFormat)(date);
-          })
+          .tickFormat((d) =>
+            d3.timeFormat(timeFormat)(
+              d instanceof Date ? d : new Date(d as number)
+            )
+          )
           .tickSizeOuter(0)
       )
       .selectAll("text")
@@ -96,86 +108,38 @@ export default function CandlestickChart({
 
     svg.append("g").call(d3.axisLeft(y));
 
-    svg
-      .selectAll(".candle")
+    // 캔들스틱 그리기
+    const candleWidth = Math.max(width / data.length - 1, 2);
+
+    const candlesticks = svg
+      .selectAll(".candlestick")
       .data(data)
       .enter()
+      .append("g")
+      .attr("class", "candlestick");
+
+    candlesticks
       .append("rect")
       .attr("x", (d) => x(new Date(d.time))!)
       .attr("y", (d) => y(Math.max(d.open, d.close)))
-      .attr("width", Math.max(width / data.length - 1, 2))
+      .attr("width", candleWidth)
       .attr("height", (d) => Math.abs(y(d.open) - y(d.close)))
       .attr("fill", (d) => (d.open > d.close ? "blue" : "red"));
 
-    svg
-      .selectAll(".stem")
-      .data(data)
-      .enter()
+    candlesticks
       .append("line")
-      .attr(
-        "x1",
-        (d) => x(new Date(d.time))! + Math.max(width / data.length - 1, 2) / 2
-      )
-      .attr(
-        "x2",
-        (d) => x(new Date(d.time))! + Math.max(width / data.length - 1, 2) / 2
-      )
+      .attr("x1", (d) => x(new Date(d.time))! + candleWidth / 2)
+      .attr("x2", (d) => x(new Date(d.time))! + candleWidth / 2)
       .attr("y1", (d) => y(d.high))
       .attr("y2", (d) => y(d.low))
       .attr("stroke", "black");
 
+    // 크로스헤어 및 레이블 설정
     const crosshair = svg.append("g").style("display", "none");
-
-    crosshair
-      .append("line")
-      .attr("class", "crosshair-x")
-      .attr("stroke", "gray")
-      .attr("stroke-dasharray", "3,3")
-      .attr("y1", 0)
-      .attr("y2", height);
-
-    crosshair
-      .append("line")
-      .attr("class", "crosshair-y")
-      .attr("stroke", "gray")
-      .attr("stroke-dasharray", "3,3")
-      .attr("x1", 0)
-      .attr("x2", width);
-
     const priceLabel = svg.append("g").style("display", "none");
-
-    priceLabel
-      .append("rect")
-      .attr("fill", "black")
-      .attr("width", 80)
-      .attr("height", 20)
-      .attr("rx", 5);
-
-    priceLabel
-      .append("text")
-      .attr("fill", "white")
-      .attr("x", 40)
-      .attr("y", 14)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px");
-
     const dateLabel = svg.append("g").style("display", "none");
 
-    dateLabel
-      .append("rect")
-      .attr("fill", "black")
-      .attr("width", 100)
-      .attr("height", 20)
-      .attr("rx", 5);
-
-    dateLabel
-      .append("text")
-      .attr("fill", "white")
-      .attr("x", 50)
-      .attr("y", 14)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px");
-
+    // 마우스 이벤트 처리
     svg
       .append("rect")
       .attr("width", width)
@@ -184,86 +148,75 @@ export default function CandlestickChart({
       .style("pointer-events", "all")
       .on("mousemove", (event) => {
         const [mouseX, mouseY] = d3.pointer(event);
-
         const xDate = x.invert(mouseX);
         const yValue = y.invert(mouseY);
 
-        const formattedYValue = (() => {
-          if (yValue >= 1000) {
-            // 1000 이상: 정수만 표시하고 로케일 적용
-            return Math.floor(yValue).toLocaleString();
-          } else if (yValue >= 1) {
-            // 1 이상 1000 미만: 소수점 첫째 자리까지 표시하고 로케일 적용
-            return yValue.toLocaleString(undefined, {
-              minimumFractionDigits: 1,
-              maximumFractionDigits: 1,
-            });
-          } else {
-            // 1 미만: 소수점 여섯째 자리까지 표시
-            return yValue.toLocaleString(undefined, {
-              minimumFractionDigits: 6,
-              maximumFractionDigits: 6,
-            });
-          }
-        })();
-
-        const formattedDate = d3.timeFormat(timeFormat)(xDate);
-
-        crosshair.style("display", null);
         crosshair
-          .select(".crosshair-x")
-          .attr("x1", 0)
-          .attr("x2", width)
-          .attr("y1", mouseY)
-          .attr("y2", mouseY);
-
-        crosshair
-          .select(".crosshair-y")
-          .attr("x1", x(xDate))
-          .attr("x2", x(xDate))
-          .attr("y1", 0)
-          .attr("y2", height);
-
-        priceLabel
           .style("display", null)
-          .attr(
-            "transform",
-            `translate(${mouseX > width - 100 ? mouseX - 100 : mouseX - 40}, ${
-              mouseY - 20
-            })`
-          );
-        priceLabel.select("text").text(`${formattedYValue}`);
+          .selectAll("line")
+          .data([
+            [0, mouseY, width, mouseY],
+            [mouseX, 0, mouseX, height],
+          ])
+          .join("line")
+          .attr("x1", (d) => d[0])
+          .attr("y1", (d) => d[1])
+          .attr("x2", (d) => d[2])
+          .attr("y2", (d) => d[3])
+          .attr("stroke", "gray")
+          .attr("stroke-dasharray", "3,3");
 
-        dateLabel
-          .style("display", null)
-          .attr(
-            "transform",
-            `translate(${mouseX > width - 100 ? mouseX - 100 : mouseX - 40}, ${
-              height + 20
-            })`
-          );
-        dateLabel.select("text").text(`${formattedDate}`);
+        const formattedYValue =
+          yValue >= 1000
+            ? Math.floor(yValue).toLocaleString()
+            : yValue >= 1
+            ? yValue.toLocaleString(undefined, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })
+            : yValue.toLocaleString(undefined, {
+                minimumFractionDigits: 6,
+                maximumFractionDigits: 6,
+              });
+
+        updateLabel(priceLabel, formattedYValue, mouseX, mouseY - 20, width);
+        updateLabel(
+          dateLabel,
+          d3.timeFormat(timeFormat)(xDate),
+          mouseX,
+          height + 20,
+          width
+        );
       })
       .on("mouseout", () => {
         crosshair.style("display", "none");
         priceLabel.style("display", "none");
         dateLabel.style("display", "none");
       });
-  }, [data, unit]);
+  }, [data, chartConfig]);
 
   useEffect(() => {
     renderChart();
-
-    const handleResize = () => {
-      renderChart();
-    };
-
+    const handleResize = () => renderChart();
     window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, [renderChart]);
 
   return <svg ref={svgRef}></svg>;
+}
+
+// 레이블 업데이트 헬퍼 함수
+function updateLabel(
+  label: d3.Selection<SVGGElement, unknown, null, undefined>,
+  text: string,
+  x: number,
+  y: number,
+  width: number
+) {
+  const labelWidth = text.length * 8;
+  const xPos = x > width - labelWidth ? x - labelWidth : x;
+
+  label.style("display", null).attr("transform", `translate(${xPos},${y})`);
+
+  label.select("text").text(text);
 }

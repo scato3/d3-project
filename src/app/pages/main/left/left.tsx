@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import CandlestickChart from "./components/chart";
 import styles from "./left.module.scss";
 import { getMarketName } from "@/app/utils/translate";
 import { TimeUnitType } from "@/app/type/time";
 import Trade from "./components/trade";
+
+const MemoizedCandlestickChart = memo(CandlestickChart);
+const MemoizedTrade = memo(Trade);
 
 export default function Left({
   selectedMarketCode,
@@ -22,6 +25,10 @@ export default function Left({
     { label: "월", value: "months" },
   ] as const;
 
+  const handleUnitChange = useCallback((newUnit: TimeUnitType) => {
+    setUnit(newUnit);
+  }, []);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -35,15 +42,15 @@ export default function Left({
               className={`${styles.button} ${
                 unit === unitOption.value ? styles.active : ""
               }`}
-              onClick={() => setUnit(unitOption.value)}
+              onClick={() => handleUnitChange(unitOption.value)}
             >
               {unitOption.label}
             </button>
           ))}
         </div>
       </div>
-      <CandlestickChart marketCode={selectedMarketCode} unit={unit} />
-      <Trade selectedMarketCode={selectedMarketCode} />
+      <MemoizedCandlestickChart marketCode={selectedMarketCode} unit={unit} />
+      <MemoizedTrade selectedMarketCode={selectedMarketCode} />
     </div>
   );
 }

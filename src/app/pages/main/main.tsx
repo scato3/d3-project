@@ -1,26 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import Left from "./left/left";
 import Right from "./right/right";
 import styles from "./main.module.scss";
+
+const MemoizedLeft = memo(Left);
+const MemoizedRight = memo(Right);
 
 export default function Main() {
   const [selectedMarketCode, setSelectedMarketCode] =
     useState<string>("KRW-BTC");
 
-  const handleMarketSelect = (marketCode: string) => {
+  const handleMarketSelect = useCallback((marketCode: string) => {
     setSelectedMarketCode(marketCode);
-  };
+  }, []);
 
   return (
     <div className={styles.container}>
       <div className={styles.left}>
-        <Left selectedMarketCode={selectedMarketCode} />
+        <MemoizedLeft selectedMarketCode={selectedMarketCode} />
       </div>
       <div className={styles.right}>
-        <Right
-          onMarketSelect={handleMarketSelect}
+        <MemoizedRight
+          onMarketSelectAction={handleMarketSelect}
           selectedMarketCode={selectedMarketCode}
         />
       </div>
