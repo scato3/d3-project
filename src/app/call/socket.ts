@@ -44,7 +44,6 @@ export function useUpbitWebSocket({
     const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
 
     ws.onopen = () => {
-      console.log("WebSocket connected");
       reconnectAttemptRef.current = 0;
       const subscribeMessage = JSON.stringify([
         { ticket: "UNIQUE_TICKET" },
@@ -77,7 +76,6 @@ export function useUpbitWebSocket({
     };
 
     ws.onclose = (event) => {
-      console.log("WebSocket disconnected");
       if (!event.wasClean) {
         handleWebSocketError();
       }
