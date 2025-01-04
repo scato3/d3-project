@@ -109,7 +109,6 @@ export function useUpbitWebSocket({
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const updateMessage = JSON.stringify([
         { ticket: "UNIQUE_TICKET" },
-        { type: "ticker", codes: marketCodes },
         { type: "trade", codes: marketCodes },
         { format: "SIMPLE" },
       ]);
