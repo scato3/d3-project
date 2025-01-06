@@ -60,31 +60,40 @@
 ### 1. 최적화된 WebSocket 관리
 
 ```typescript
-// 자동 재연결 메커니즘과 구독 관리
-function connectWebSocket(marketCodes: string[]) {
-  if (globalWs?.readyState === WebSocket.OPEN) {
-    // 이미 연결된 웹소켓이 있다면 새로운 구독 메시지만 전송
-    const subscribeMessage = JSON.stringify([
-      { ticket: "UNIQUE_TICKET" },
-      {
-        type: "ticker",
-        codes: marketCodes,
-      },
-      {
-        type: "trade",
-        codes: marketCodes,
-      },
-      {
-        type: "orderbook",
-        codes: marketCodes,
-      },
-      { format: "SIMPLE" },
-    ]);
-    globalWs.send(subscribeMessage);
-    return;
-  }
-  // ... 웹소켓 연결 및 에러 처리 로직
-}
+const createWebSocket = useCallback(
+  (type: "ticker" | "trade" | "orderbook") => {
+    // 중복 연결 방지
+    if (reconnectingRef.current[type] && wsRef.current[type]) {
+      return wsRef.current[type];
+    }
+
+    const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
+    wsRef.current[type] = ws;
+
+    ws.onopen = () => {
+      const subscribeMessage = JSON.stringify([
+        { ticket: `UNIQUE_TICKET_${type}` },
+        { type, codes: marketCodesRef.current },
+        { format: "SIMPLE" },
+      ]);
+      ws.send(subscribeMessage);
+    };
+
+    // 지수 백오프를 통한 재연결 로직
+    ws.onclose = (event) => {
+      if (!event.wasClean && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+        reconnectTimeout = setTimeout(() => {
+          reconnectAttempts++;
+          createWebSocket(type);
+        }, delay);
+      }
+    };
+
+    return ws;
+  },
+  []
+);
 ```
 
 ### 2. 동적 소수점 처리
