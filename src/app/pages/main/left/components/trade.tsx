@@ -39,16 +39,31 @@ export default function Trade({
       return `${adjustedHour.toString().padStart(2, "0")}${trade.ttm.slice(2)}`;
     })();
 
+    const getDecimalPlaces = (price: number) => {
+      if (price < 0.01) return 6;
+      if (price < 1) return 4;
+      if (price < 100) return 2;
+      return 0;
+    };
+
+    const formatPrice = (price: number, basePrice: number) => {
+      const decimalPlaces = getDecimalPlaces(basePrice);
+      if (decimalPlaces === 0) {
+        return price.toLocaleString();
+      }
+      return price.toFixed(decimalPlaces);
+    };
+
     return (
       <div className={styles.row}>
         <div className={styles.cell}>{adjustedTime}</div>
-        <div className={styles.cell}>{trade.tp.toLocaleString()}</div>
+        <div className={styles.cell}>{formatPrice(trade.tp, trade.tp)}</div>
         <div
           className={`${styles.cell} ${
             trade.c === "RISE" ? styles.red : styles.blue
           }`}
         >
-          {(trade.cp || 0).toLocaleString()}
+          {formatPrice(trade.cp || 0, trade.tp)}
         </div>
         <div className={styles.cell}>{trade.tv.toFixed(4)}</div>
       </div>

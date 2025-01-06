@@ -19,8 +19,20 @@
 - React-Virtuoso를 활용한 가상 스크롤링
 - 가격 변동에 따른 시각적 피드백
 - 자동 시간대 조정 (KST)
+- 동적 소수점 자릿수 처리
+  - 0.01 미만: 소수점 6자리
+  - 1 미만: 소수점 4자리
+  - 100 미만: 소수점 2자리
+  - 100 이상: 천 단위 구분자
 
-### 3. 코인 목록 관리
+### 3. 실시간 호가창
+
+- 실시간 호가 데이터 표시
+- 매수/매도 호가 구분
+- 수량 및 가격 정보 시각화
+- 자동 데이터 업데이트
+
+### 4. 코인 목록 관리
 
 - 실시간 가격 정보 업데이트
 - 다중 컬럼 정렬 기능
@@ -48,44 +60,61 @@
 ### 1. 최적화된 WebSocket 관리
 
 ```typescript
-// 자동 재연결 메커니즘
-const handleWebSocketError = useCallback(() => {
-  if (reconnectAttemptRef.current < maxReconnectAttempts) {
-    const delay = Math.min(
-      1000 * Math.pow(2, reconnectAttemptRef.current),
-      30000
-    );
-    reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
-    reconnectAttemptRef.current++;
+// 자동 재연결 메커니즘과 구독 관리
+function connectWebSocket(marketCodes: string[]) {
+  if (globalWs?.readyState === WebSocket.OPEN) {
+    // 이미 연결된 웹소켓이 있다면 새로운 구독 메시지만 전송
+    const subscribeMessage = JSON.stringify([
+      { ticket: "UNIQUE_TICKET" },
+      {
+        type: "ticker",
+        codes: marketCodes,
+      },
+      {
+        type: "trade",
+        codes: marketCodes,
+      },
+      {
+        type: "orderbook",
+        codes: marketCodes,
+      },
+      { format: "SIMPLE" },
+    ]);
+    globalWs.send(subscribeMessage);
+    return;
   }
+  // ... 웹소켓 연결 및 에러 처리 로직
+}
+```
+
+### 2. 동적 소수점 처리
+
+```typescript
+const getDecimalPlaces = (price: number) => {
+  if (price < 0.01) return 6;
+  if (price < 1) return 4;
+  if (price < 100) return 2;
+  return 0;
+};
+
+const formatPrice = (price: number, basePrice: number) => {
+  const decimalPlaces = getDecimalPlaces(basePrice);
+  if (decimalPlaces === 0) {
+    return price.toLocaleString();
+  }
+  return price.toFixed(decimalPlaces);
+};
+```
+
+### 3. 실시간 데이터 처리
+
+```typescript
+const handleTradeMessage = useCallback((newTrade: UpbitTradeData) => {
+  setTrades((prevTrades) => {
+    const updatedTrades = [newTrade, ...prevTrades].slice(0, MAX_TRADES);
+    return updatedTrades;
+  });
 }, []);
-```
-
-### 2. 차트 렌더링
-
-```typescript
-// D3.js를 활용한 캔들스틱 차트 구현
-const renderChart = useCallback(() => {
-  // 스케일 설정
-  const x = d3
-    .scaleTime()
-    .domain(d3.extent(data, (d) => new Date(d.time)) as [Date, Date])
-    .range([0, width]);
-
-  const y = d3
-    .scaleLinear()
-    .domain([d3.min(data, (d) => d.low)!, d3.max(data, (d) => d.high)!])
-    .nice()
-    .range([height, 0]);
-});
-```
-
-### 3. 메모리 최적화
-
-```typescript
-// 컴포넌트 메모이제이션
-const MemoizedCandlestickChart = memo(CandlestickChart);
-const MemoizedTrade = memo(Trade);
 ```
 
 ## 성능 최적화
@@ -101,12 +130,14 @@ const MemoizedTrade = memo(Trade);
 - WebSocket 재연결 지수 백오프 전략
 - API Route를 통한 안전한 API 호출
 - 효율적인 데이터 구조화
+- 구독 관리를 통한 네트워크 트래픽 최적화
 
 ### 3. 컴포넌트 최적화
 
 - 컴포넌트 단위의 책임 분리
 - React Hooks를 활용한 로직 재사용
 - 메모이제이션을 통한 성능 최적화
+- 버퍼링을 통한 UI 업데이트 최적화
 
 ## 실행 방법
 

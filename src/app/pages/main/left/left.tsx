@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import CandlestickChart from "./components/chart";
+import Trade from "./components/trade";
+import Orderbook from "./components/orderbook";
 import styles from "./left.module.scss";
 import { getMarketName } from "@/app/utils/translate";
 import { TimeUnitType } from "@/app/type/time";
-import Trade from "./components/trade";
 
 const MemoizedCandlestickChart = memo(CandlestickChart);
 const MemoizedTrade = memo(Trade);
+const MemoizedOrderbook = memo(Orderbook);
 
 export default function Left({
   selectedMarketCode,
@@ -16,6 +18,13 @@ export default function Left({
   selectedMarketCode: string;
 }) {
   const [unit, setUnit] = useState<TimeUnitType>("days");
+
+  useEffect(() => {
+    console.log(
+      "Left component - selectedMarketCode changed:",
+      selectedMarketCode
+    );
+  }, [selectedMarketCode]);
 
   const timeUnits = [
     { label: "초", value: "seconds" },
@@ -50,7 +59,10 @@ export default function Left({
         </div>
       </div>
       <MemoizedCandlestickChart marketCode={selectedMarketCode} unit={unit} />
-      <MemoizedTrade selectedMarketCode={selectedMarketCode} />
+      <div className={styles.bottomSection}>
+        <MemoizedOrderbook selectedMarketCode={selectedMarketCode} />
+        <MemoizedTrade selectedMarketCode={selectedMarketCode} />
+      </div>
     </div>
   );
 }

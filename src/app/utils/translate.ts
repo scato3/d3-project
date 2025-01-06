@@ -18,7 +18,6 @@ export function getMarketName(marketCode: string): string {
     "KRW-ATOM": "코스모스",
     "KRW-NEO": "네오",
     "KRW-BCH": "비트코인 캐시",
-    "KRW-ICX": "아이콘",
     "KRW-ETC": "이더리움 클래식",
     "KRW-ZIL": "질리카",
     "KRW-ONT": "온톨로지",

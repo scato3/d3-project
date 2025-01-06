@@ -2,6 +2,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  .bottomSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
 }
 
 .header {

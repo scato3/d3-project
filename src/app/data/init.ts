@@ -17,7 +17,6 @@ export const marketCodes = [
   "KRW-ATOM",
   "KRW-NEO",
   "KRW-BCH",
-  "KRW-ICX",
   "KRW-ETC",
   "KRW-ZIL",
   "KRW-ONT",

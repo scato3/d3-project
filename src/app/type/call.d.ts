@@ -28,3 +28,18 @@ export interface UpbitTradeData {
   tv: number; // 거래량
   ty: "trade"; // 메시지 타입
 }
+
+export interface UpbitOrderbookData {
+  ty: "orderbook";
+  cd: string; // 마켓 코드
+  tas: number; // total ask size
+  tbs: number; // total bid size
+  tms: number; // timestamp
+  obu: Array<{
+    ap: number; // ask price (매도 호가)
+    bp: number; // bid price (매수 호가)
+    as: number; // ask size (매도 잔량)
+    bs: number; // bid size (매수 잔량)
+  }>;
+  st: "SNAPSHOT" | "REALTIME";
+}
