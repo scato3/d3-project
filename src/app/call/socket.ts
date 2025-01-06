@@ -52,7 +52,7 @@ export function useUpbitWebSocket({
           onOrderbook(orderbookBufferRef.current);
           orderbookBufferRef.current = null;
         }
-      }, 1000);
+      }, 500);
 
       return () => {
         if (updateIntervalRef.current) {
@@ -124,6 +124,7 @@ export function useUpbitWebSocket({
         if (type === "orderbook") {
           if (!reconnectingRef.current[type]) {
             reconnectingRef.current[type] = true;
+            const reconnectDelay = 3000;
             setTimeout(() => {
               reconnectingRef.current[type] = false;
               if (
@@ -132,7 +133,7 @@ export function useUpbitWebSocket({
               ) {
                 createWebSocket(type);
               }
-            }, 1000);
+            }, reconnectDelay);
           }
           return;
         }
