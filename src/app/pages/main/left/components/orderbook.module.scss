@@ -1,9 +1,10 @@
 .container {
   width: 100%;
+  max-height: calc(100dvh - 470px);
+  overflow: hidden;
   background-color: #fff;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header {

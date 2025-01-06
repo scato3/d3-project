@@ -82,7 +82,7 @@ export default function Trade({
         <div className={styles.headerCell}>거래량 ({selectedMarketCode})</div>
       </div>
       <Virtuoso
-        style={{ height: "calc(100vh - 600px)" }}
+        style={{ height: "calc(100vh - 470px)" }}
         totalCount={trades.length}
         itemContent={(index) => <TradeRow trade={trades[index]} />}
         overscan={20}
