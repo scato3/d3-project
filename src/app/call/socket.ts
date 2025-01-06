@@ -22,6 +22,10 @@ function connectWebSocket(marketCodes: string[]) {
     const subscribeMessage = JSON.stringify([
       { ticket: "UNIQUE_TICKET" },
       {
+        type: "ticker",
+        codes: marketCodes,
+      },
+      {
         type: "trade",
         codes: marketCodes,
       },
