@@ -18,24 +18,34 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 
 function connectWebSocket(marketCodes: string[]) {
   if (globalWs?.readyState === WebSocket.OPEN) {
-    // 이미 연결된 웹소켓이 있다면 새로운 구독 메시지만 전송
-    const subscribeMessage = JSON.stringify([
-      { ticket: "UNIQUE_TICKET" },
-      {
-        type: "ticker",
-        codes: marketCodes,
-      },
-      {
-        type: "trade",
-        codes: marketCodes,
-      },
-      {
-        type: "orderbook",
-        codes: marketCodes,
-      },
-      { format: "SIMPLE" },
+    // 구독 해제 메시지 전송
+    const unsubscribeMessage = JSON.stringify([
+      { ticket: "UNSUBSCRIBE" },
+      { type: "unsubscribe", codes: ["*"] },
     ]);
-    globalWs.send(subscribeMessage);
+    globalWs.send(unsubscribeMessage);
+
+    // 새로운 구독 메시지 전송
+    setTimeout(() => {
+      if (!globalWs) return;
+      const subscribeMessage = JSON.stringify([
+        { ticket: "UNIQUE_TICKET" },
+        {
+          type: "ticker",
+          codes: marketCodes,
+        },
+        {
+          type: "trade",
+          codes: marketCodes,
+        },
+        {
+          type: "orderbook",
+          codes: marketCodes,
+        },
+        { format: "SIMPLE" },
+      ]);
+      globalWs.send(subscribeMessage);
+    }, 100);
     return;
   }
 
