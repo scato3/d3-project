@@ -68,7 +68,6 @@ export function useUpbitWebSocket({
       const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
 
       ws.onopen = () => {
-        console.log(`WebSocket connected for ${type}`);
         reconnectAttempts = 0;
         const subscribeMessage = JSON.stringify([
           { ticket: `UNIQUE_TICKET_${type}` },
@@ -115,7 +114,15 @@ export function useUpbitWebSocket({
       };
 
       ws.onclose = (event) => {
-        console.log(`WebSocket disconnected for ${type}`, event);
+        if (type === "orderbook") {
+          console.log(
+            "Orderbook WebSocket disconnected, attempting immediate reconnect"
+          );
+          setTimeout(() => {
+            createWebSocket(type);
+          }, 100);
+          return;
+        }
 
         if (!event.wasClean && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
@@ -138,6 +145,7 @@ export function useUpbitWebSocket({
     []
   );
 
+  // Ticker WebSocket
   useEffect(() => {
     if (onMessage) {
       const ws = createWebSocket("ticker");
@@ -147,27 +155,35 @@ export function useUpbitWebSocket({
         }
       };
     }
-  }, [createWebSocket, onMessage, marketCodes]);
+  }, [marketCodes]);
 
+  // Trade WebSocket - ticker 연결 후 약간의 딜레이를 두고 연결
   useEffect(() => {
     if (onTrade) {
-      const ws = createWebSocket("trade");
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
+      const timeoutId = setTimeout(() => {
+        const ws = createWebSocket("trade");
+        return () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        };
+      }, 500);
+      return () => clearTimeout(timeoutId);
     }
-  }, [createWebSocket, onTrade, marketCodes]);
+  }, [marketCodes]);
 
+  // Orderbook WebSocket - trade 연결 후 약간의 딜레이를 두고 연결
   useEffect(() => {
     if (onOrderbook) {
-      const ws = createWebSocket("orderbook");
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
+      const timeoutId = setTimeout(() => {
+        const ws = createWebSocket("orderbook");
+        return () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        };
+      }, 1000);
+      return () => clearTimeout(timeoutId);
     }
-  }, [createWebSocket, onOrderbook, marketCodes]);
+  }, [marketCodes]);
 }
