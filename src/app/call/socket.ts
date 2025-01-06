@@ -25,6 +25,9 @@ export function useUpbitWebSocket({
   const orderbookBufferRef = useRef<UpbitOrderbookData | null>(null);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const wsRef = useRef<{ [key: string]: WebSocket | null }>({});
+  const reconnectingRef = useRef<{ [key: string]: boolean }>({});
+
   useEffect(() => {
     marketCodesRef.current = marketCodes;
   }, [marketCodes]);
@@ -65,10 +68,14 @@ export function useUpbitWebSocket({
       let reconnectAttempts = 0;
       const MAX_RECONNECT_ATTEMPTS = 5;
 
+      if (reconnectingRef.current[type] && wsRef.current[type]) {
+        return wsRef.current[type];
+      }
+
       const ws = new WebSocket("wss://api.upbit.com/websocket/v1");
+      wsRef.current[type] = ws;
 
       ws.onopen = () => {
-        reconnectAttempts = 0;
         const subscribeMessage = JSON.stringify([
           { ticket: `UNIQUE_TICKET_${type}` },
           { type, codes: marketCodesRef.current },
@@ -115,12 +122,18 @@ export function useUpbitWebSocket({
 
       ws.onclose = (event) => {
         if (type === "orderbook") {
-          console.log(
-            "Orderbook WebSocket disconnected, attempting immediate reconnect"
-          );
-          setTimeout(() => {
-            createWebSocket(type);
-          }, 100);
+          if (!reconnectingRef.current[type]) {
+            reconnectingRef.current[type] = true;
+            setTimeout(() => {
+              reconnectingRef.current[type] = false;
+              if (
+                !wsRef.current[type] ||
+                wsRef.current[type]?.readyState === WebSocket.CLOSED
+              ) {
+                createWebSocket(type);
+              }
+            }, 1000);
+          }
           return;
         }
 

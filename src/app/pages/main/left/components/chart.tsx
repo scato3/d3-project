@@ -29,13 +29,13 @@ export default function CandlestickChart({
     return {
       margin: { top: 20, right: 30, bottom: 50, left: 100 },
       width: containerWidth - 130,
-      height: 400 - 70,
+      height: 200,
       timeFormat:
         unit === "seconds"
           ? "%H:%M:%S"
           : unit === "minutes"
-          ? "%H:%M"
-          : "%Y-%m-%d",
+            ? "%H:%M"
+            : "%Y-%m-%d",
     };
   }, [unit]);
 
@@ -170,14 +170,14 @@ export default function CandlestickChart({
           yValue >= 1000
             ? Math.floor(yValue).toLocaleString()
             : yValue >= 1
-            ? yValue.toLocaleString(undefined, {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1,
-              })
-            : yValue.toLocaleString(undefined, {
-                minimumFractionDigits: 6,
-                maximumFractionDigits: 6,
-              });
+              ? yValue.toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })
+              : yValue.toLocaleString(undefined, {
+                  minimumFractionDigits: 6,
+                  maximumFractionDigits: 6,
+                });
 
         updateLabel(priceLabel, formattedYValue, mouseX, mouseY - 20, width);
         updateLabel(
